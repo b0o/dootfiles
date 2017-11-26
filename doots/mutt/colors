@@ -1,0 +1,63 @@
+# Purp theme by Maddison Hellstrom (github.com/b0o)
+# Adapted from Base16 scheme and Base16 Builder by Chris Kempson (https://github.com/chriskempson)
+# Mutt template by Robert Timm (https://github.com/rti)
+
+### general
+#     name               foreground  background  pattern
+color normal             color13     color11
+color error              color9      color11
+color tilde              color8      color11
+color message            color2      color11
+color markers            color2      color11
+color attachment         color4      color11
+color search             color2      color11
+color status             color2      color8
+color indicator          color11     color3
+color tree               color5      color11
+
+### index
+#     name               foreground  background   pattern      description
+color index              color13     color11      "~A"         # all messages
+color index              color9      color11      "~F"         # flagged messages
+color index              color12     color11      "~v~(!~N)"   # collapsed thread with no unread
+color index              color2      color11      "~U"         # unread messages
+color index              color4      color11      "~v~(~N)"    # collapsed thread with some unread
+color index              color9      color11      "~v~(~F)"    # collapsed thread with some flagged
+color index              color13     color10      "~D"         # deleted messages
+color index              color4      color11      "~g"         # PGP signed messages
+color index              color4      color11      "~G"         # PGP encrypted messages
+color index              color12     color11      "~P"         # message is from you (consults $alternates)
+
+### sidebar
+#     name               foreground  background   pattern      description
+color sidebar_highlight  color2      color8
+
+### header
+#     name               foreground  background   pattern      description
+color hdrdefault         color13     color8
+
+# # body
+color normal             color13     color11
+color underline          color7      color11
+color bold               color7      color11
+color signature          color12     color11
+color quoted             color12     color11
+color quoted1            color1      color11
+color quoted2            color8      color11
+color quoted3            color8      color11
+color quoted4            color8      color11
+
+# pgp
+color body               color4      color11      "(Good signature)"
+color body               color4      color11      "^gpg: Good signature .*"
+color body               color9      color11      "^gpg: "
+color body               color10     color11      "(BAD signature)"
+color body               color10     color11      "^gpg: BAD signature from.*"
+
+# body url
+color body               color2      color11      "([a-z][a-z0-9+-]*://(((([a-z0-9_.!~*'();:&=+$,-]|%[0-9a-f][0-9a-f])*@)?((([a-z0-9]([a-z0-9-]*[a-z0-9])?)\\.)*([a-z]([a-z0-9-]*[a-z0-9])?)\\.?|[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)(:[0-9]+)?)|([a-z0-9_.!~*'()$,;:@&=+-]|%[0-9a-f][0-9a-f])+)(/([a-z0-9_.!~*'():@&=+$,-]|%[0-9a-f][0-9a-f])*(;([a-z0-9_.!~*'():@&=+$,-]|%[0-9a-f][0-9a-f])*)*(/([a-z0-9_.!~*'():@&=+$,-]|%[0-9a-f][0-9a-f])*(;([a-z0-9_.!~*'():@&=+$,-]|%[0-9a-f][0-9a-f])*)*)*)?(\\?([a-z0-9_.!~*'();/?:@&=+$,-]|%[0-9a-f][0-9a-f])*)?(#([a-z0-9_.!~*'();/?:@&=+$,-]|%[0-9a-f][0-9a-f])*)?|(www|ftp)\\.(([a-z0-9]([a-z0-9-]*[a-z0-9])?)\\.)*([a-z]([a-z0-9-]*[a-z0-9])?)\\.?(:[0-9]+)?(/([-a-z0-9_.!~*'():@&=+$,]|%[0-9a-f][0-9a-f])*(;([-a-z0-9_.!~*'():@&=+$,]|%[0-9a-f][0-9a-f])*)*(/([-a-z0-9_.!~*'():@&=+$,]|%[0-9a-f][0-9a-f])*(;([-a-z0-9_.!~*'():@&=+$,]|%[0-9a-f][0-9a-f])*)*)*)?(\\?([-a-z0-9_.!~*'();/?:@&=+$,]|%[0-9a-f][0-9a-f])*)?(#([-a-z0-9_.!~*'();/?:@&=+$,]|%[0-9a-f][0-9a-f])*)?)[^].,:;!)? \t\r\n<>\"]"
+
+# body email
+color body               color14     color11      "((@(([0-9a-z-]+\\.)*[0-9a-z-]+\\.?|#[0-9]+|\\[[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\]),)*@(([0-9a-z-]+\\.)*[0-9a-z-]+\\.?|#[0-9]+|\\[[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\.[0-9]?[0-9]?[0-9]\\]):)?[0-9a-z_.+%$-]+@(([0-9a-z-]+\\.)*[0-9a-z-]+\\.?|#[0-9]+|\\[[0-2]?[0-9]?[0-9]\\.[0-2]?[0-9]?[0-9]\\.[0-2]?[0-9]?[0-9]\\.[0-2]?[0-9]?[0-9]\\])"
+
+# vim: filetype=muttrc

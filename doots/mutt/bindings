@@ -1,0 +1,54 @@
+bind index g          noop
+bind index gg         first-entry
+bind index G          last-entry
+bind index \eN        search-opposite
+bind index \en        search-next
+bind index n          mail
+bind index L          bottom-page
+bind index M          middle-page
+bind index H          top-page
+bind index \e\?       what-key
+bind index <BackTab>  previous-new-then-unread
+bind index \ex        collapse-thread
+bind index \eX        collapse-all
+
+bind pager /     search
+bind pager j     next-line
+bind pager k     previous-line
+bind pager g     noop
+bind pager gg    top
+bind pager G     bottom
+# bind pager <Esc> quit
+
+bind index,pager \#  noop
+bind index,pager \&  noop
+bind index,pager S   save-message
+bind index,pager m   read-subthread
+bind index,pager \em read-thread
+
+bind compose \e<return> send-message
+
+bind index,pager \e\.       sidebar-toggle-visible
+bind index,pager \e\'       sidebar-next
+bind index,pager \e\;       sidebar-prev
+bind index,pager \ej        sidebar-next
+bind index,pager \ek        sidebar-prev
+bind index,pager \e\"       sidebar-page-down
+bind index,pager \e\:       sidebar-page-up
+bind index,pager \e<return> sidebar-open
+
+macro index,pager \eJ  "<sidebar-next><sidebar-open>" "Open next mailbox"
+macro index,pager \eK  "<sidebar-prev><sidebar-open>" "Open previous mailbox"
+macro index,pager \e\] "<sidebar-next-new><sidebar-open>" "Open next mailbox with new mail"
+macro index,pager \e\[ "<sidebar-prev-new><sidebar-open>" "Open last mailbox with new mail"
+
+macro index,pager \e1 "<change-folder>+$MUTT_ACCOUNT_1/INBOX<enter>" "Select $MUTT_ACCOUNT_1"
+macro index,pager \e2 "<change-folder>+$MUTT_ACCOUNT_2/INBOX<enter>" "Select $MUTT_ACCOUNT_2"
+
+# github.com/firecat53/urlscan
+macro index,pager    \cu "<pipe-message> urlscan --compact --dedupe<Enter>" "Call urlscan to extract URLs out of a message"
+macro attach,compose \cu   "<pipe-entry> urlscan --compact --dedupe<Enter>" "Call urlscan to extract URLs out of a message"
+
+macro index \er "<shell-escape>offlineimap-oneshot<enter>" "Sync IMAP"
+
+# vim: set ft=muttrc:
