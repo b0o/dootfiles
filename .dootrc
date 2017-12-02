@@ -1,0 +1,13 @@
+#!/bin/bash
+
+INSTALLDIR="$HOME"
+DOTFILEDIR="$(dirname $0)"
+BINDIR="$DOTFILEDIR/bin"
+VENDORDIR="$DOTFILEDIR/vendor"
+VENDORREPOS=
+
+declare -a VENDORREPOS=(
+	"https://gitlab.com/b0o/dirciple"
+	"robbyrussell/oh-my-zsh"
+	"jwiegley/git-scripts"
+)
