@@ -1,0 +1,74 @@
+source ~/.mutt/alias
+source ~/.mutt/bindings
+source ~/.mutt/colors
+source ~/.mutt/accounts/mailboxes
+
+# Folder hooks
+folder-hook $MUTT_ACCOUNT_1/* source ~/.mutt/accounts/$MUTT_ACCOUNT_1
+folder-hook $MUTT_ACCOUNT_2/* source ~/.mutt/accounts/$MUTT_ACCOUNT_2
+
+# Default account
+source ~/.mutt/accounts/$MUTT_ACCOUNT_1
+
+  set charset      = utf-8
+  set send_charset = utf-8
+  set alias_file   = ~/.mutt/alias
+  set menu_scroll
+  set smart_wrap
+  set tilde
+unset move
+unset wait_key
+  set quit
+  set envelope_from
+  set fcc_attach
+unset mime_forward
+  set forward_format = "Fwd: %s"
+  set include
+  set forward_quote
+  set askcc
+unset confirmappend
+  set edit_headers
+  set editor            = "nvim +:silent+?^$"
+  set fast_reply
+  set folder            = ~/Mail
+  set forward_quote
+  set header_cache      = ~/.mutt/cache
+unset help
+  set include
+  set index_format      = "%3C │ %Z │ %[!%a %d %b %H:%M] ┃ %-12.12F │ %s"
+  set mail_check        = 10
+  set mail_check_stats_interval = 60
+  set mail_check_stats
+  set mailcap_path      = ~/.mutt/mailcap
+unset mark_old
+unset markers
+  set mime_forward      = ask-no
+  set mbox_type         = Maildir
+  set menu_scroll
+  set pager_context     = 5
+  set pager_index_lines = 10
+  set pager_stop
+  set pipe_decode
+unset record
+  set reply_to
+  set reverse_name
+  set sort              = threads
+  set sort_aux          = reverse-last-date-received
+  set sort_re
+  set status_format     = " [%r]   %?M?%M/?%m   [%f]   %?n? New:%n?%?o? Old:%o?%?d? Del:%d?%?F? Flag:%F?%?t? Tag:%t?%?p? Post:%p?%?l?   %lb? %> (%P)   "
+  set sidebar_format    = "%B%*  %?N?%N&-?"
+  set sidebar_next_new_wrap
+  set strict_threads
+  set thorough_search
+  set tilde
+  set timeout           = 3
+  set tmpdir            = ~/.mutt/temp
+
+auto_view text/html
+alternative_order text/plain text/enriched text/html
+
+ignore *
+unignore from: to: cc: date: subject:
+hdr_order from: to: cc: date: subject:
+
+# vim: set ft=muttrc:

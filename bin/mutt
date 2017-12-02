@@ -1,0 +1,3 @@
+#!/bin/bash
+source $HOME/.private/mutt
+/usr/bin/neomutt -F $HOME/.mutt/muttrc

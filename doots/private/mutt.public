@@ -1,0 +1,3 @@
+#!/bin/bash
+export MUTT_ACCOUNT_1="gmail_foobar"
+export MUTT_ACCOUNT_2="fastmail_lorem"
