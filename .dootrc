@@ -1,11 +1,36 @@
 #!/bin/bash
 
+# $INSTALLDIR  - Directory to install (link) doots into. default $HOME
+#
+# $DOTFILEDIR  - Path to the dootfiles repository (e.g. the directory
+#                containing this file)
+#
+# $SOURCEDIR   - Path to the directory containing the actual configuration
+#                files you want to install. $DOTFILEDIR/doots by default.
+#
+# $BINDIR      - Path to the directory containing binaries and scripts.
+#                $DOTFILEDIR/bin by default
+#
+# $VENDORDIR   - Directory which will contain third-party git repos from
+#                $VENDORREPOS
+#
+# $VENDORREPOS - An array of git repository URLs for third-party
+#                dependencies. If the scheme + domain (i.e.
+#                "https://example.com/") is omitted, it will default to
+#                "https://github.com/", e.g "username/repo" will refer
+#                to "https://github.com/username/repo".
+#                If, once cloned, the repository contains an executable file
+#                named "install.dotfiles.sh" in the topmost directory, that
+#                file will be executed. All environment variables set in this
+#                script will be available to it (e.g. the install.dotfiles.sh
+#                script can check for the $DOTFILESINSTALL variable (declared
+#                above) to determine if it was called by this script or not.
+
 INSTALLDIR="$HOME"
 DOTFILEDIR="$(dirname $0)"
+SOURCEDIR="$DOTFILEDIR/doots"
 BINDIR="$DOTFILEDIR/bin"
 VENDORDIR="$DOTFILEDIR/vendor"
-VENDORREPOS=
-
 declare -a VENDORREPOS=(
 	"https://gitlab.com/b0o/dirciple"
 	"robbyrussell/oh-my-zsh"

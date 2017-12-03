@@ -1,47 +1,153 @@
 #!/bin/bash
-# shopt -s dotglob
 DOTFILESINSTALL=true
 BASEDIR=$(dirname $0)
+QUIET=0
+VERBOSE=0
+INIT=0
 
-# load dootfiles configuration
-# Can define the following configuration options:
-#    $INSTALLDIR  - Directory to install (link) doots into - usually $HOME
-#    $DOTFILEDIR  - Path to the dootfiles repository (e.g. the directory containing this file)
-#    $BINDIR      - Path to the directory containing binaries and scripts. $DOTFILEDIR/bin by default
-#    $VENDORDIR   - Directory which will contain third-party git repos from $VENDORREPOS
-#    $VENDORREPOS - An array of git repository URLs for third-party dependencies.
-#                   If the scheme + domain (i.e. "https://example.com/") is omitted, it will
-#                   default to "https://github.com/", e.g "username/repo" will refer
-#                   to "https://github.com/username/repo".
-#                   If, once cloned, the repository contains an executable file named "install.dotfiles.sh"
-#                   in the topmost directory, that file will be executed. All environment variables set in this
-#                   script will be available to it (e.g. the install.dotfiles.sh script can check for the $DOTFILESINSTALL
-#                   variable (declared above) to determine if it was called by this script or not.
-source "$BASEDIR/.dootrc"
+backlogs=()
+function backlog () {
+	backlogs+=("${@}")
+}
 
-function log () {
-	[[ $quiet ]] && return
-	echo "${@}" >&2
+backvlogs=()
+function backvlog () {
+	backvlogs+=("${@}")
+}
+
+function logbacklogs () {
+	[[ $INIT == 0 ]] && return 1
+	for l in "${backlogs[@]}" ; do
+		log "${l}"
+	done
+	for l in "${backvlogs[@]}" ; do
+		vlog "${l}"
+	done
 }
 
 function log () {
-	[[ $quiet ]] && return
+	[[ $INIT == 0 ]] && backlog "${@}" && return
+	[[ $QUIET == 1 ]] && [[ $VERBOSE == 0 ]] && return
 	echo "${@}" >&2
 }
 
 function vlog () {
-	[[ $verbose == 0 ]] && return
+	[[ $INIT == 0 ]] && backvlog "${@}" && return
+	[[ $VERBOSE == 0 ]] && return
 	echo "${@}" >&2
 }
 
-function logf () {
-	[[ $quiet ]] && return
-	printf ${@} >&2
-}
+function main () {
+	usage="usage: $(basename "$0") [-h] [-p] [-e] <path>
 
-function vlogf () {
-	[[ $verbose == 0 ]] && return
-	printf ${@} >&2
+	DootInstaller v0.1.0
+	(c) 2017 Maddison Hellstrom
+	https://github.com/b0o/dootfiles
+	MIT License
+
+	It installs your doots, what else do you expect from me?
+
+	Options:
+		 -h          Display this message and exit.
+		 -q          Run in quiet mode
+		 -V          Run in verbose mode - overrides quiet mode
+		 -c          Specify the configuration file - defaults to ./dootrc
+		 -i          Specify the install directory.
+		             Overrides INSTALLDIR from dootrc
+		 -s          Specify the source directory.
+		             Overrides SOURCEDIR from dootrc
+		 -b          Specify the bin directory.
+		             Overrides BINDIR from dootrc
+		 -v          Specify the vendor directory.
+		             Overrides VENDORDIR from dootrc
+		 -r          Specify a vendor repository URL.
+		             Can be specified multiple times for multiple repos
+		             Appended to VENDORREPOS from dootrc
+		 -R          Specify all vendor repository URLs, comma delimited
+		             Overrides VENDORREPOS from dootrc and -r options
+
+		--- TODO ---
+		 -d          Specify a single dootfile to install from within SOURCEDIR
+		             Can be specified multiple times for multiple dootfiles
+		             If specified, only these dootfiles will be installed
+		             If not specified, all dootfiles within SOURCEDIR will be installed
+		 -Y          Bypass any and all confirmation messages, selecting the safest
+		             option by default.
+		 -D          Dry run
+	"
+	# Default option values
+	DOOTRC="$BASEDIR/dootrc"
+	OPT_INSTALLDIR=""
+	OPT_SOURCEDIR=""
+	OPT_BINDIR=""
+	OPT_VENDORDIR=""
+	OPT_VENDORREPOS=()
+	OPT_VENDORREPOS_R=()
+	vlog "Parsing options:"
+	while getopts 'hqVc:i:s:b:v:r:R:' option; do
+		case "$option" in
+			h) echo "$usage"
+				exit 1
+				;;
+			q) QUIET=1;                          vlog "-q (QUIET) set to '${QUIET}'"
+				;;
+			V) VERBOSE=1;                        vlog "-v (VERBOSE) set to '${VERBOSE}'"
+				;;
+			c) DOOTRC="${OPTARG}";               vlog "-c (DOOTRC) set to '${DOOTRC}'"
+				;;
+			i) OPT_INSTALLDIR="${OPTARG}";       vlog "-i (OPT_INSTALLDIR) set to '${OPT_INSTALLDIR}'"
+				;;
+			s) OPT_SOURCEDIR="${OPTARG}";        vlog "-s (OPT_SOURCEDIR) set to '${OPT_SOURCEDIR}'"
+				;;
+			b) OPT_BINDIR="${OPTARG}";           vlog "-b (OPT_BINDIR) set to '${OPT_BINDIR}'"
+				;;
+			v) OPT_VENDORDIR="${OPTARG}";        vlog "-v (OPT_VENDORDIR) set to '${OPT_VENDORDIR}'"
+				;;
+			r) OPT_VENDORREPOS+=("${OPTARG}");   vlog "-r (OPT_VENDORREPOS) set to '${OPT_VENDORREPOS[@]}'"
+				;;
+			R) # https://stackoverflow.com/a/45201229/8202881
+				readarray -td '' a < <(awk '{ gsub(/,/,"\0"); print; }' <<< "$OPTARG, "); unset 'a[-1]';
+				OPT_VENDORREPOS_R=(${a[@]});       vlog "-R (OPT_VENDORREPOS_R) set to '${OPT_VENDORREPOS[@]}'"
+				;;
+			\?) logf "Error: illegal option: -%s\n" "${OPTARG}"
+				log "$usage"
+				exit 1
+				;;
+		esac
+	done
+	shift $(($OPTIND - 1))
+
+	# log messages from before verbose/quiet variables could be set
+	INIT=1
+	logbacklogs
+
+	# Validate $DOOTRC before sourcing it
+	DOOTRC="$(realpath $DOOTRC)"
+	[[ ! -f $DOOTRC ]] && {
+		log "Error: Configuration file $DOOTRC not found"
+		exit 1
+	}
+	[[ ! -r $DOOTRC ]] && {
+		log "Error: Unable to read configuration file $DOOTRC"
+		exit 1
+	}
+
+	vlog "Sourcing $DOOTRC..."
+	source $DOOTRC
+
+	[[ ! -z $OPT_INSTALLDIR ]]      && INSTALLDIR=$OPT_INSTALLDIR
+	[[ ! -z $OPT_SOURCEDIR ]]       && SOURCEDIR=$OPT_SOURCEDIR
+	[[ ! -z $OPT_BINDIR ]]          && BINDIR=$OPT_BINDIR
+	[[ ! -z $OPT_VENDORDIR ]]       && VENDORDIR=$OPT_VENDORDIR
+	[[ ${#OPT_VENDORREPOS} > 0 ]]   && VENDORREPOS+=(${OPT_VENDORREPOS[@]})
+	[[ ${#OPT_VENDORREPOS_R} > 0 ]] && VENDORREPOS=(${OPT_VENDORREPOS_R[@]})
+
+	vlog "Using these settings:"
+	vlog "INSTALLDIR:  $INSTALLDIR"
+	vlog "SOURCEDIR:   $SOURCEDIR"
+	vlog "BINDIR:      $BINDIR"
+	vlog "VENDORDIR:   $VENDORDIR"
+	vlog "VENDORREPOS: ${VENDORREPOS[@]}"
 }
 
 function backup_file () {
@@ -139,15 +245,17 @@ function backup_file () {
 	[[ $response =~ ^([aA])$ ]] && {
 		log "Backing up $FILE to $BAKPATH"
 		cp $FILE $BAKPATH
-		[[ $? != 0 ]] && {
+		c=$?
+		[[ $c != 0 ]] && {
 			log "Error: Unable to copy $FILE to $BAKPATH"
-			return $?
+			return $c
 		}
 		vlog "Removing original file $FILE after backing up to $BAKPATH"
 		rm -rf $FILE
-		[[ $? != 0 ]] && {
+		c=$?
+		[[ $c != 0 ]] && {
 			log "Error: Unable to remove $FILE after backing up"
-			return $?
+			return $c
 		}
 		return 0
 	}
@@ -156,9 +264,10 @@ function backup_file () {
 	[[ $response =~ ^([bB])$ ]] && {
 		log "Overwriting $FILE"
 		rm -rf $FILE
-		[[ $? != 0 ]] && {
+		c=$?
+		[[ $c != 0 ]] && {
 			log "Error: Unable to overwrite $FILE"
-			return $?
+			return $c
 		}
 		return 0
 	}
@@ -173,8 +282,114 @@ function backup_file () {
 }
 
 function make_file () {
-	vlog "Creating file: ${@}"
-	return 0 # TODO
+	usage="usage: $(basename "$0"):${FUNCNAME[0]} [-h] [-d|f|l <source>] <path>
+
+	Attempt create a new file, directory, or symlink
+
+	Options:
+		 -h          Display this message and exit.
+		 -r          If the parent directory of the specified file does not exist, attempt to create it (recursive)
+		 -d          Attempt to create a directory
+		 -f          Attempt to create a normal file (default)
+		 -l <source> Attempt to create a symlink pointing to <source>
+	"
+	TYPE="f"
+	LINK=""
+	RECURSIVE=0
+	while getopts 'hrdfl:' option; do
+		case "$option" in
+			h) log "$usage"
+				exit 1
+				;;
+			r) RECURSIVE=1;   vlog "-r (RECURSIVE) set to '${RECURSIVE}'"
+				;;
+			d) TYPE="d";      vlog "-d (TYPE) set to '${TYPE}'"
+				;;
+			f) TYPE="f";      vlog "-f (TYPE) set to '${TYPE}'"
+				;;
+			l) TYPE="l";      vlog "-l (TYPE) set to '${TYPE}'"
+				LINK="$OPTARG"; vlog "-l (LINK) set to '${LINK}'"
+				;;
+			\?) logf "Error: illegal option: -%s\n" "${OPTARG}"
+				log "$usage"
+				exit 1
+				;;
+		esac
+	done
+	shift $(($OPTIND - 1))
+
+	[[ -z $1 ]] && {
+		log "Error: Missing argument <file>"
+		log "$usage"
+		exit 1
+	}
+
+	FILE="$1"
+
+	[[ -a $FILE ]] && {
+		log "Error: $FILE already exists"
+		return 1
+	}
+
+	FILENAME="$(basename "$FILE")"
+	FILEDIR="$(dirname "$FILE")"
+
+	[[ -a $FILEDIR ]] && {
+		[[ -d $FILEDIR ]] && {
+			[[ ! -w $FILEDIR ]] && {
+				log "Error: $DIR is not writable"
+				return 1
+			}
+		} || {
+			log "Error: $DIR exists but is not a directory"
+			return 1
+		}
+	} || {
+		[[ $RECURSIVE == 1 ]] && {
+			make_file -d -r $FILEDIR
+			c=$?
+			[[ $c != 0 ]] && {
+				log "Error: Unable to create directory $FILEDIR"
+				return $c
+			}
+		} || {
+			log "Error: $DIR does not exist (specify -r to create it)"
+			return 1
+		}
+	}
+
+	[[ $TYPE == 'd' ]] && {
+		mkdir $FILE
+		c=$?
+		[[ $c != 0 ]] && {
+			log "Error: Unable to create directory $FILE"
+			return $c
+		}
+		return 0
+	}
+
+	[[ $TYPE == 'f' ]] && {
+		touch $FILE
+		c=$?
+		[[ $c != 0 ]] && {
+			log "Error: Unable to create file $FILE"
+			return $c
+		}
+		return 0
+	}
+
+	[[ $TYPE == 'l' ]] && {
+		ln -s $LINK $FILE
+		c=$?
+		[[ $c != 0 ]] && {
+			log "Error: Unable to create symlink $FILE -> $LINK"
+			return $c
+		}
+		return 0
+	}
+
+	log "Invalid TYPE: $TYPE"
+	return 1
 }
 
 function ensure_exists () {
@@ -185,8 +400,6 @@ function ensure_exists () {
 	Options:
 		 -h          Display this message and exit.
 		 -m          Create the file if it doesn't exist
-		 -p          Recursively check parent(s) are directories first.
-		             The values of -m, -p, and -w will be passed along.
 		 -w          Ensure file is writable
 		 -d          Assert file is a directory.
 		             If -m is set and nothing yet exists, an empty directory will be created.
@@ -203,7 +416,6 @@ function ensure_exists () {
 	"
 	TYPE="f"
 	MK=0
-	PARENT=0
 	WRITABLE=0
 	LINK=""
 	ENSURELINK=1
@@ -214,8 +426,6 @@ function ensure_exists () {
 				exit 1
 				;;
 			m) MK=1;          vlog "-m (MK) set to '${MK}'"
-				;;
-			p) PARENT=1;      vlog "-p (PARENT) set to '${PARENT}'"
 				;;
 			w) WRITABLE=1;    vlog "-w (WRITABLE) set to '${WRITABLE}'"
 				;;
@@ -254,11 +464,21 @@ function ensure_exists () {
 
 	[[ ! -a $FILE ]] && {
 		[[ $MK == 1 ]] && {
-			[[ $TYPE == 'l' ]] && [[ $ENSURELINK == 1 ]] && {
-				[[ ! -a $LINK ]] && return 1
+			arg="-${TYPE}"
+			[[ $TYPE == 'l' ]] && {
+				[[ $ENSURELINK == 1 ]] && {
+					[[ ! -a $LINK ]] && return 1
+				}
+				arg="${arg} $LINK"
 			}
-			make_file "-${TYPE}" $FILE
-			return $?
+			make_file $arg $FILE
+			c=$?
+			[[ $c != 0 ]] && {
+				log "Error: Unable to make_file $FILE"
+				return $c
+			} || {
+				return 0
+			}
 		}
 		return 1
 	}
@@ -269,9 +489,18 @@ function ensure_exists () {
 		} || {
 			[[ $BACKUP == 1 ]] && {
 				backup_file -p $FILE
-				[[ $? != 0 ]] && return 1
+				c=$?
+				[[ $c != 0 ]] && {
+					log "Error: Unable to backup_file $FILE"
+					return $c
+				}
 				make_file -d $FILE
-				return $?
+				c=$?
+				[[ $c != 0 ]] && {
+					log "Error: Unable to make_file $FILE"
+					return $c
+				}
+				return 0
 			}
 			return 1
 		}
@@ -283,9 +512,18 @@ function ensure_exists () {
 		} || {
 			[[ $BACKUP == 1 ]] && {
 				backup_file -p $FILE
-				[[ $? != 0 ]] && return 1
+				c=$?
+				[[ $c != 0 ]] && {
+					log "Error: Unable to backup_file $FILE"
+					return $c
+				}
 				make_file -f $FILE
-				return $?
+				c=$?
+				[[ $c != 0 ]] && {
+					log "Error: Unable to make_file $FILE"
+					return $c
+				}
+				return 0
 			}
 			return 1
 		}
@@ -301,9 +539,18 @@ function ensure_exists () {
 		}
 		[[ $BACKUP == 1 ]] && {
 			backup_file -p $FILE
-			[[ $? != 0 ]] && return 1
+			c=$?
+			[[ $c != 0 ]] && {
+				log "Error: Unable to backup_file $FILE"
+				return $c
+			}
 			make_file -l $LINK $FILE
-			return $?
+			c=$?
+			[[ $c != 0 ]] && {
+				log "Error: Unable to make_file $FILE"
+				return $c
+			}
+			return 0
 		}
 		return 1
 	}
@@ -312,4 +559,4 @@ function ensure_exists () {
 	return 1
 }
 
-backup_file "${@:1}"
+main "${@}"
